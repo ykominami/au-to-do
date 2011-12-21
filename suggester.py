@@ -324,8 +324,8 @@ class Trainer(webapp.RequestHandler):
     untrained_models = db.GqlQuery('SELECT * FROM SuggestionModel '
                                    'WHERE training_examples = 0')
 
-    storage = gslite.GsClient(access_key=settings.GS_LEGACY_ACCESS,
-                              secret=settings.GS_LEGACY_SECRET)
+    storage = gslite.GsClient(access_key=settings.GS_INTEROPERABLE_ACCESS,
+                              secret=settings.GS_INTEROPERABLE_SECRET)
     tag_counts = {}
     for untrained_model in untrained_models:
       logging.info('UNTRAINED MODEL = ' + untrained_model.name)

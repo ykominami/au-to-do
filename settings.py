@@ -38,7 +38,7 @@ DOMAIN = 'anonymous'
 USE_MEMCACHE_FOR_JSON_MODELS = True
 MEMCACHE_VERSION_PREFIX = '1-'
 
-# Google Storage Legacy Access
-GS_LEGACY_ACCESS = 'your_legacy_access_key'
-GS_LEGACY_SECRET = 'your_legacy_access_secret'
+# Google Interoperable Access
+GS_INTEROPERABLE_ACCESS = 'your_legacy_access_key'
+GS_INTEROPERABLE_SECRET = 'your_legacy_access_secret'
 GS_BUCKET = 'autodo-predictionmodels'
