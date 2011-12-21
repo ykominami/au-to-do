@@ -1,0 +1,18 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body onload='Extension.popupInit();'>
+    <div id='content'>
+      <div id='login' style='display: none;'>
+        <h3><a href='' onclick='Extension.openATD();'>Login</a></h3>
+        <p>This will open Au-to-do in a new tab and log you in. Once you've logged in, the extension will sync automatically.</p>
+      </div>
+      <div id='incidents' style='display: none;'>
+        <div class='atd-link'><a id='atd-link'>Au-to-do &raquo;</a></div>
+        <h3>Your Incidents</h3>
+      </div>
+    </div>
+    <script src='extension.js' type='text/javascript'></script>
+  </body>
+</html>

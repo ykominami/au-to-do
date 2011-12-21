@@ -1,0 +1,20 @@
+{
+  "name": "Au-to-do extension",
+  "version": "1.0.0",
+
+  "description": "Provides the number of tickets assigned to you in Au-to-do.",
+
+  "browser_action": {
+    "default_icon": "icon.png",
+    "popup": "popup.html"
+  },
+  "background_page": "background.html",
+
+  "permissions": [
+    "http://your-application-id.appspot.com/*",
+    "background",
+    "tabs"
+  ],
+
+  "manifest_version": 2
+}

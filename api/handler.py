@@ -62,6 +62,11 @@ class IncidentNotFoundError(IncidentError):
   pass
 
 
+class UserNotAuthenticatedError(IncidentError):
+  """Raised if a request refers to a user that isn't authenticated."""
+  pass
+
+
 class UserSettingsError(Exception):
   """Base class for any errors handling UserSettings."""
   pass
@@ -207,6 +212,14 @@ class IncidentHandler(webapp.RequestHandler):
     self.response.out.write(('One of the date parameters in your request was '
                              'not in ISO 8601 format.'))
 
+  def _HandleUserNotAuthenticatedError(self):
+    """Handle a UserNotAuthenticatedError, yield an HTTP 401."""
+    self.response.clear()
+    self.response.clear()
+    self.response.set_status(401)
+    self.response.out.write('One of the parameters refers to the current '
+                            'user, but the user is not authenticated.')
+
   def _HandleIncidentNotFoundError(self):
     """Handle an IncidentNotFoundError, yield an HTTP 404."""
     self.response.clear()
@@ -304,6 +317,8 @@ class IncidentHandler(webapp.RequestHandler):
       self._HandleInvalidListError()
     except InvalidDateError:
       self._HandleInvalidDateError()
+    except UserNotAuthenticatedError:
+      self._HandleUserNotAuthenticatedError()
     except db.Error, e:
       self._HandleUnknownError(e)
 
@@ -359,6 +374,30 @@ class IncidentHandler(webapp.RequestHandler):
     Returns:
       Query.
     """
+    query.filter(property_operator, value)
+    return query
+
+  @staticmethod
+  def ApplyPersonalFilter(query, property_operator, value):
+    """Apply a single filter to the model query, replacing the value of 'me'.
+
+    Args:
+      query: App Engine model query to apply the filters to.
+      property_operator: String containing the property name, and an optional
+                         comparison operator.
+      value: Single filter, possibly containing 'me' referring to the current
+             user.
+    Returns:
+      Query.
+    Raises:
+      UserNotAuthenticatedError: User referenced by me is not authenticated.
+    """
+    if value == 'me':
+      user = users.get_current_user()
+      if user:
+        value = user.email()
+      else:
+        raise UserNotAuthenticatedError
     query.filter(property_operator, value)
     return query
 
@@ -420,7 +459,7 @@ INCIDENT_FILTERS = [
      None),
     ('suggested_tags', 'suggested_tags = ', IncidentHandler.ApplyListFilter,
      None),
-    ('owner', 'owner = ', IncidentHandler.ApplyFilter, None),
+    ('owner', 'owner = ', IncidentHandler.ApplyPersonalFilter, None),
     ('created_before', 'created < ', IncidentHandler.ApplyDateFilter,
      'created'),
     ('created_after', 'created > ', IncidentHandler.ApplyDateFilter, 'created'),

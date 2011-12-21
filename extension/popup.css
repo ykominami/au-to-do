@@ -1,0 +1,64 @@
+/*
+ * Copyright 2011 Google Inc.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ * Author: Dan Holevoet 
+ *
+ * CSS rules for the "Au-to-do" Chrome extension
+ *
+ */
+
+@import url(http://fonts.googleapis.com/css?family=Open+Sans);
+
+body {
+  font-family: "Open Sans", "Helvetica", "Arial";
+  min-width:350px;
+  overflow-x:hidden;
+  color: #444;
+}
+h3 {
+  padding: 0px 0px 5px;
+  margin: 0px;
+}
+a {
+  text-decoration: none;
+  color: #444;
+  font-weight: bold;
+  cursor: pointer;
+}
+div.content-list-div {
+  font-size: 13px;
+  cursor: pointer;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  margin-right: 8px;
+  max-width: 330px;
+  padding: 3px 0px 3px 10px;
+  border-top: 1px solid #DEDEDE;
+}
+div.content-list-div:hover {
+  background: #F7F7F7;
+  border-left: 1px solid #DEDEDE;
+  border-right: 1px solid #DEDEDE;
+  padding-left: 9px;
+}
+div.content-list-div:last-child {
+  border-bottom: 1px solid #DEDEDE;
+}
+div.atd-link {
+  cursor: pointer;
+  float: right;
+  font-size: 13px;
+  padding: 3px 10px 5px;
+}
