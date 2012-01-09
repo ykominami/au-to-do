@@ -49,16 +49,24 @@ class DatastoreResetPage(webapp.RequestHandler):
 
       # Creates an incident assigned to 'some_user' if one doesn't exist.
       if user.nickname() is not 'some_user':
-        self.CreateIncident('Incident for some_user', 'some_user')
+        self.CreateIncident('Incident for some_user',
+                            owner='some_user')
 
       # Creates an incident with the accepted tag of 'API-Test'.
-      self.CreateIncident('API-Test', 'none', ['API-Test'])
+      self.CreateIncident('API-Test', accepted_tags=['API-Test'])
 
       # Creates an incident with the accepted tag of 'Special-ToAssignTag'.
-      self.CreateIncident('To assign tag', 'none', ['Special-ToAssignTag'])
+      self.CreateIncident('To assign tag',
+                          accepted_tags=['Special-ToAssignTag'])
+
+      # Creates an incident to be resolved.
+      self.CreateIncident('To resolve', accepted_tags=['Special-ToResolve'])
+
+      # Creates a resolved incident.
+      self.CreateIncident('Resolved', status='resolved')
 
   def CreateIncident(self, title, owner='none', accepted_tags=None,
-                     suggested_tags=None):
+                     suggested_tags=None, status='new'):
     """Creates an incident with limited customization.
 
     Args:
@@ -66,6 +74,7 @@ class DatastoreResetPage(webapp.RequestHandler):
       owner: Optionally specifies the owner of the incident.
       accepted_tags: Optional list of accepted_tags applied to the incident.
       suggested_tags: Optional list of suggested_tags applied to the incident.
+      status: Optional string status for the new incident.
     """
     # Set empty tags outside of the default constructor, in case we ever need
     # to modify these later.
@@ -77,7 +86,7 @@ class DatastoreResetPage(webapp.RequestHandler):
     incident = model.Incident()
     incident.title = title
     incident.created = datetime.now()
-    incident.status = 'NEW'
+    incident.status = status
     incident.owner = owner
     incident.author = 'test@example.com'
     incident.mailing_list = 'support@example.com'

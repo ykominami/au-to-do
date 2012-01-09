@@ -283,7 +283,8 @@ class Trainer(webapp.RequestHandler):
     updated_incidents = db.GqlQuery('SELECT * FROM Incident '
                                     'WHERE training_review = TRUE')
     for updated_incident in updated_incidents:
-      logging.info('UPDATED INCIDENT = ' + updated_incident.title)
+      if updated_incident.title:
+        logging.info('UPDATED INCIDENT = ' + updated_incident.title)
       processed_incident = {}
       new_tags = (set(updated_incident.accepted_tags) -
                   set(updated_incident.trained_tags))

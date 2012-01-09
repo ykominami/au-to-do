@@ -27,6 +27,7 @@ use_library('django', '1.2')
 from django.utils import simplejson
 from apiclient import errors
 from apiclient.discovery import build
+from oauth2client import client
 from google.appengine.api import users
 from google.appengine.ext import db
 from google.appengine.ext import webapp
@@ -135,9 +136,12 @@ class UserSettingsHandler(webapp.RequestHandler):
       List of task lists.
     """
     try:
-      client = build('tasks', 'v1', http=credentials.authorize(httplib2.Http()))
-      tasklists = client.tasklists().list().execute()
+      service = build(
+          'tasks', 'v1', http=credentials.authorize(httplib2.Http()))
+      tasklists = service.tasklists().list().execute()
       return [{'id': x['id'], 'title': x['title']} for x in tasklists['items']]
+    except client.AccessTokenRefreshError:
+      raise UserOrSettingsNotFoundError()
     except errors.HttpError:
       return []
 
@@ -460,6 +464,7 @@ INCIDENT_FILTERS = [
     ('suggested_tags', 'suggested_tags = ', IncidentHandler.ApplyListFilter,
      None),
     ('owner', 'owner = ', IncidentHandler.ApplyPersonalFilter, None),
+    ('status', 'status = ', IncidentHandler.ApplyFilter, None),
     ('created_before', 'created < ', IncidentHandler.ApplyDateFilter,
      'created'),
     ('created_after', 'created > ', IncidentHandler.ApplyDateFilter, 'created'),

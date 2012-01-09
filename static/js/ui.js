@@ -102,10 +102,16 @@ google.devrel.samples.autodo.Query.ALL = 'all';
 google.devrel.samples.autodo.Query.ID = 'id';
 
 /**
- * Query for 'my' incidents.
+ * Query for 'my' open incidents.
  * @type {string}
  */
 google.devrel.samples.autodo.Query.MINE = 'mine';
+
+/**
+ * Query for 'my' incidents of any status.
+ * @type {string}
+ */
+google.devrel.samples.autodo.Query.MINE_ALL = 'mineall';
 
 /**
  * Query for resolved incidents.
@@ -120,10 +126,10 @@ google.devrel.samples.autodo.Query.RESOLVED = 'resolved';
 google.devrel.samples.autodo.Query.SETTINGS = 'settings';
 
 /**
- * Query for unassigned incidents.
+ * Query for incidents that need action (unassigned and open).
  * @type {string}
  */
-google.devrel.samples.autodo.Query.UNASSIGNED = 'unassigned';
+google.devrel.samples.autodo.Query.NEEDS_ACTION = 'needsaction';
 
 /** Render object for rendering content. */
 google.devrel.samples.autodo.Render =
@@ -294,13 +300,18 @@ google.devrel.samples.autodo.ApiClient.assignIncident = function(data, owner) {
 };
 
 /**
- * Calls the autodo API to resolve an incident.
+ * Calls the autodo API to set the status of an incident.
  * @param {Object} data Data representation of an incident.
+ * @param {string} status New status to set for the incident.
  */
-google.devrel.samples.autodo.ApiClient.resolveIncident = function(data) {
-  Render.showInfoMessage('Resolving incident...');
-  data.resolved = (new Date).toISOString();
-  data.status = 'resolved';
+google.devrel.samples.autodo.ApiClient.setStatus = function(data, status) {
+  Render.showInfoMessage('Setting incident status...');
+  if (status == Query.RESOLVED) {
+    data.resolved = (new Date).toISOString();
+  } else {
+    data.resolved = null;
+  }
+  data.status = status;
   $.ajax({
     url: ApiClient.BASE_URI + data.id,
     type: 'PUT',
@@ -491,15 +502,19 @@ google.devrel.samples.autodo.Render.incidentTable = function(data) {
   $('#content').empty();
   $('#content').append($('<table>').addClass('list'));
   $.each(data, function(i, incident) {
-    var trow = $('<tr>');
+    var trow = $('<tr>').attr('status', incident.status);
     var checkBox = Render.checkBox({
       cssClass: 'content_checkbox', value: incident.id
+    });
+    checkBox.change(function() {
+      Render.setStatusButton();
     });
     trow.append($('<td>').append(checkBox));
     // Incident title and message summary.
     var incidentTd = $('<td>');
     var incidentDiv = $('<div>').addClass(
-        'content-list-div').attr('value', incident.id);
+        'content-list-div').attr('value', incident.id).attr('status',
+        incident.status);
     // <p> tags are used as throwaway tags for HTML sanitization and don't
     // appear in the UI.
     incidentDiv.append($('<strong>').append($('<p>').text(
@@ -521,11 +536,33 @@ google.devrel.samples.autodo.Render.incidentTable = function(data) {
     }
   });
   Render.reloadButton();
+  Render.setStatusButton();
   Render.popUpCheckboxes(tagList);
   Bindings.bindIncidentLink();
-  Bindings.bindCheckBoxes();
+  Bindings.bindCheckAllBoxes();
   Bindings.bindAcceptTags();
   Bindings.bindRemoveTags();
+};
+
+/**
+ * Renders a button to resolve or reopen an incident.
+ * @param {boolean=} opt_override Whether to optionally override the button
+ *                                default status of false.
+ */
+google.devrel.samples.autodo.Render.setStatusButton = function(opt_override) {
+  var resolved = opt_override || false;
+  $('.content_checkbox:checked').parent().parent().find('.content-list-div').
+      each(function() {
+    if ($(this).attr('status') == 'resolved') {
+      resolved = true;
+      return false;
+    }
+  });
+  if (!resolved) {
+    $('#status-button').text('Resolve').attr('status', 'resolved');
+  } else {
+    $('#status-button').text('Open').attr('status', 'new');
+  }
 };
 
 /**
@@ -697,6 +734,7 @@ google.devrel.samples.autodo.Render.popUpCheckboxes = function(
  */
 google.devrel.samples.autodo.Render.singleIncident = function(data) {
   Render.backButton();
+  Render.setStatusButton(data.status == 'resolved');
   Render.originalButton(data.canonical_link);
   $('#content').empty();
   var incidentTd = $('<td>').css('padding', '10px 0px 10px 0px');
@@ -823,7 +861,7 @@ google.devrel.samples.autodo.Render.showGrantAccessWindow = function(api) {
 /**
  * Binds incident checkboxes to the master checkbox toggle.
  */
-google.devrel.samples.autodo.Bindings.bindCheckBoxes = function() {
+google.devrel.samples.autodo.Bindings.bindCheckAllBoxes = function() {
   $('#toggle-all').change(function() {
     var checkedStatus = this.checked;
     $('.content_checkbox').each(function() {
@@ -920,15 +958,16 @@ google.devrel.samples.autodo.Bindings.bindAssignOptions = function() {
 };
 
 /**
- * Binds the "resolve" button to incident resolving function.
+ * Binds the status button to incident resolving/reopen function.
  */
-google.devrel.samples.autodo.Bindings.bindResolveOptions = function() {
-  $('a.resolve-button').click(function() {
+google.devrel.samples.autodo.Bindings.bindStatusOptions = function() {
+  $('a.status-button').click(function() {
+    var status = $(this).attr('status');
     // Retrieve incidents that should be updated.
     $('#content').find('input:checked, div.title.content-list-div').each(
         function() {
       ApiClient.getIncidentData($(this).attr('value'),
-                                ApiClient.resolveIncident);
+                                ApiClient.setStatus, status);
     });
   });
 };
@@ -952,8 +991,11 @@ google.devrel.samples.autodo.Bindings.bindSideBar = function() {
   $('li.mine').click(function() {
     Util.setHashPair(Query.MINE);
   });
-  $('li.unassigned').click(function() {
-    Util.setHashPair(Query.UNASSIGNED);
+  $('li.mineall').click(function() {
+    Util.setHashPair(Query.MINE_ALL);
+  });
+  $('li.needsaction').click(function() {
+    Util.setHashPair(Query.NEEDS_ACTION);
   });
   $('li.resolved').click(function() {
     Util.setHashPair(Query.RESOLVED);
@@ -1178,13 +1220,16 @@ google.devrel.samples.autodo.Bindings.bindHashChange = function() {
         ApiClient.listView('owner=');
         break;
       case Query.MINE:
+        ApiClient.listView('owner=' + currentUser + '&status=new');
+        break;
+      case Query.MINE_ALL:
         ApiClient.listView('owner=' + currentUser);
         break;
-      case Query.UNASSIGNED:
-        ApiClient.listView('owner=none');
+      case Query.NEEDS_ACTION:
+        ApiClient.listView('owner=none&status=new');
         break;
       case Query.RESOLVED:
-        // Skip for now.
+        ApiClient.listView('status=resolved');
         break;
       case Query.ID:
         ApiClient.singleView(hashPair.value);
@@ -1193,7 +1238,7 @@ google.devrel.samples.autodo.Bindings.bindHashChange = function() {
         Render.settingsList();
         break;
       default:
-        $('input#search-box').val(hashPair.key + '=' + hashPair.value);
+        $('input#search-box').val(Util.getHashString());
         ApiClient.search();
     }
     var button = $('#sidebar').find('li' + '.' + hashPair.key);
@@ -1204,18 +1249,43 @@ google.devrel.samples.autodo.Bindings.bindHashChange = function() {
 };
 
 /**
- * Returns a parsed key/value pair representing the window's location.hash.
+ * Returns the first key/value pair from the window's location.hash. This
+ * is useful for checking if the user is on a special page
+ * (e.g. key == 'mine').
  * @return {Object} An object containing the key (object.key) and value
- *                  (object.value).
+ *                  (object.value) pair.
  */
 google.devrel.samples.autodo.Util.getHashPair = function() {
+  return Util.getHashPairs()[0];
+};
+
+/**
+ * Returns an array of parsed key/value pair representing the window's
+ * location.hash.
+ * @return {Array} An array containing all key (object.key) and value
+ *                 (object.value) pairs.
+ */
+google.devrel.samples.autodo.Util.getHashPairs = function() {
+  var sub = Util.getHashString();
+  var result = [];
+  var pairs = sub.split(' ');
+  for (var i in pairs) {
+    var split = pairs[i].split('=');
+    result.push({
+      key: split[0],
+      value: split[1]
+    });
+  }
+  return result;
+};
+
+/**
+ * Returns a sanitized copy of the hash, suitable for use in a search.
+ * @return {string} Sanitized hash string.
+ */
+google.devrel.samples.autodo.Util.getHashString = function() {
   var fragment = window.location.hash;
-  var sub = fragment.substring(1, fragment.length);
-  var split = sub.split('=');
-  return {
-    key: split[0],
-    value: split[1]
-  };
+  return fragment.substring(1, fragment.length);
 };
 
 /**
@@ -1254,12 +1324,8 @@ google.devrel.samples.autodo.Render.loadPreviousHashPair = function() {
  * updated version of the current view.
  */
 google.devrel.samples.autodo.Util.reloadCurrentHash = function() {
-  Logger.log('reloading hash');
-  var hashPair = Util.getHashPair();
-  if (hashPair.key != Query.ID) {
-    Logger.log('triggering hashchange');
-    $(window).trigger('hashchange');
-  }
+  Logger.log('triggering hashchange');
+  $(window).trigger('hashchange');
 };
 
 /**
@@ -1333,7 +1399,7 @@ $(document).ready(function() {
   Bindings.bindTagTextInput();
   Bindings.bindTagOptions();
   Bindings.bindAssignOptions();
-  Bindings.bindResolveOptions();
+  Bindings.bindStatusOptions();
   Bindings.bindNotificationBar();
   Bindings.bindLastActionBar();
   Bindings.bindSideBar();

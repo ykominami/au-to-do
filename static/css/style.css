@@ -244,6 +244,12 @@ input {
   max-width: 50%;
 }
 
+#userinfo {
+  color: #666;
+  float: right;
+  padding: 16px 32px 0px 0px;
+}
+
 input[type="text"] {
   height: 29px;
   background-color: white;
@@ -418,6 +424,14 @@ div.options-menu input {
 #content table.list tr:hover {
   background: #F7F7F7;
   border-left: 1px solid #DEDEDE;
+}
+
+#content table.list tr[status="resolved"] {
+  background: #F5FFF0;
+}
+
+#content table.list tr[status="resolved"]:hover {
+  background: #E9F2E4;
 }
 
 #content table.list td {

@@ -88,7 +88,7 @@ class OAuthGrantPage(webapp.RequestHandler):
                                  scope=' '.join(SCOPES[api]['scopes']),
                                  user_agent=settings.USER_AGENT,
                                  domain=settings.DOMAIN,
-                                 state=api)
+                                 state=api, access_type='offline')
       callback = self.request.host_url + '/oauth2callback'
       authorize_url = flow.step1_get_authorize_url(callback)
 

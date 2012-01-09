@@ -39,7 +39,6 @@ handlers:
 
 - url: /oauth.*
   script: oauth.py
-  login: admin
 
 - url: /ds_reset
   script: ds_reset.py

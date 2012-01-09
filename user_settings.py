@@ -70,14 +70,12 @@ class UserSettingsPage(webapp.RequestHandler):
       credentials = credentials.credentials
       http = httplib2.Http()
       http = credentials.authorize(http)
-      service = build('prediction', 'v1.2', http=http)
+      service = build('prediction', 'v1.4', http=http)
       try:
-        train = service.training()
+        train = service.trainedmodels()
 
         for suggestion_model in suggestion_models:
-          gs_full_name = '%s/%s' % (settings.GS_BUCKET,
-                                    suggestion_model.training_file)
-          state = train.get(data=gs_full_name).execute()
+          state = train.get(id=suggestion_model.training_file).execute()
           status[suggestion_model.name] = state['trainingStatus']
       except client.AccessTokenRefreshError:
         status['Failed to retrieve training data'] = 'Refresh credentials'
